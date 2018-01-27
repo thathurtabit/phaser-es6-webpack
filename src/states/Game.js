@@ -12,6 +12,9 @@ export default class extends Phaser.State {
     this.platforms = this.platforms
     this.hitPlatform = this.hitPlatform
     this.cursors = this.cursors
+    this.stars = this.stars
+    this.score = 0
+    this.scoreText = this.scoreText
   }
 
   init () {}
@@ -49,6 +52,39 @@ export default class extends Phaser.State {
     ledge.body.immovable = true
   }
 
+  // Handle overlap between player and object
+  collectStar (player, star) {
+    // Removes the star from the screen
+    star.kill()
+
+    //  Add and update the score
+    this.score += 10
+    this.scoreText.text = `Score: ${this.score}`
+
+    if (this.score === 10 * 12) {
+      this.scoreText.text = `You win!`
+    }
+  }
+
+  // Allow the player to collect stars
+  starGroup () {
+    this.stars = this.add.group()
+
+    this.stars.enableBody = true
+
+    //  Here we'll create 12 of them evenly spaced apart
+    for (let i = 0; i < 12; i++) {
+      //  Create a star inside of the 'stars' group
+      let star = this.stars.create(i * 70, 0, 'star')
+
+      //  Let gravity do its thing
+      star.body.gravity.y = 100
+
+      //  This just gives each star a slightly random bounce value
+      star.body.bounce.y = 0.2 + Math.random() * 0.2
+    }
+  }
+
   // Player
   playerBuilder () {
     // The player and its settings
@@ -58,8 +94,8 @@ export default class extends Phaser.State {
     this.physics.arcade.enable(this.player)
 
     //  Player physics properties. Give the little guy a slight bounce.
-    this.player.body.bounce.y = 0.8
-    this.player.body.gravity.y = 300
+    this.player.body.bounce.y = 0.1
+    this.player.body.gravity.y = 400
     this.player.body.collideWorldBounds = true
 
     //  Our two animations, walking left and right.
@@ -67,6 +103,7 @@ export default class extends Phaser.State {
     this.player.animations.add('right', [5, 6, 7, 8], 10, true)
   }
 
+  // Movement events
   movementEvents () {
     this.cursors = this.input.keyboard.createCursorKeys()
     //  Reset the players velocity (movementEvents)
@@ -92,6 +129,7 @@ export default class extends Phaser.State {
     }
   }
 
+  // CREATE THE THINGS
   create () {
     //  We're going to be using physics, so enable the Arcade Physics system
     this.physics.startSystem(Phaser.Physics.ARCADE)
@@ -101,11 +139,19 @@ export default class extends Phaser.State {
 
     this.platformBuilder()
     this.playerBuilder()
+    this.starGroup()
+
+    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '18px', fill: '#000' })
   }
 
   update () {
-    //  Collide the player and the stars with the platforms
+    // Collide the player and the stars with the platforms
     this.hitPlatform = this.physics.arcade.collide(this.player, this.platforms)
+    // Stars colliding with platforms
+    this.physics.arcade.collide(this.stars, this.platforms)
+    // This for keyboard events
+    this.physics.arcade.overlap(this.player, this.stars, this.collectStar, null, this)
+    // This for keyboard events
     this.movementEvents()
   }
 
