@@ -1,10 +1,6 @@
 /* globals __DEV__ */
 import Phaser from 'phaser'
 
-// Set init global vars
-// var player
-// var platforms
-
 export default class extends Phaser.State {
   constructor () {
     super()
